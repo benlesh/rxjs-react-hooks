@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { from, identity, Observable, ObservableInput, Subject } from 'rxjs';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { from, Observable, ObservableInput, Subject } from 'rxjs';
 
 export function useObservedValue<V, D>(
 	valueSource: ObservableInput<V> | null | undefined,
@@ -7,6 +7,7 @@ export function useObservedValue<V, D>(
 		defaultValue: D;
 		onError?: (error: any) => void;
 		onComplete?: () => void;
+		suspense?: boolean;
 	}
 ): V | D;
 export function useObservedValue<V, D>(
@@ -15,6 +16,7 @@ export function useObservedValue<V, D>(
 		defaultValue?: undefined;
 		onError?: (error: any) => void;
 		onComplete?: () => void;
+		suspense?: boolean;
 	}
 ): V;
 export function useObservedValue<V, D>(
@@ -23,21 +25,54 @@ export function useObservedValue<V, D>(
 		defaultValue?: D;
 		onError?: (error: any) => void;
 		onComplete?: () => void;
+		suspense?: boolean;
 	}
 ) {
-	const { defaultValue, onError, onComplete } = config ?? {};
+	const susRef = useRef(
+		null as null | { sus: Promise<void> | null; found: (() => void) | null }
+	);
+
+	const { defaultValue, onError, onComplete, suspense } = config ?? {};
 	const [value, setValue] = useState(defaultValue as V | D);
 
 	useEffect(() => {
 		if (valueSource) {
 			const subscription = from(valueSource).subscribe({
-				next: setValue,
-				error: onError,
-				complete: onComplete,
+				next: value => {
+					susRef.current?.found?.();
+					setValue(value);
+				},
+				error: err => {
+					susRef.current?.found?.();
+					onError?.(err);
+				},
+				complete: () => {
+					susRef.current?.found?.();
+					onComplete?.();
+				},
 			});
 			return () => subscription.unsubscribe();
 		}
 	}, [valueSource]);
+
+	if (suspense) {
+		if (!susRef.current) {
+			let resolver: () => void;
+			const sus = new Promise<void>(resolve => {
+				resolver = resolve;
+			});
+			susRef.current = {
+				sus,
+				found() {
+					this.sus = this.found = null;
+					resolver!();
+				},
+			};
+		}
+		if (susRef.current.sus) {
+			throw susRef.current.sus;
+		}
+	}
 
 	return value;
 }
