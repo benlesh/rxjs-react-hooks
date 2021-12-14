@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { from, identity, Observable, ObservableInput, Subject } from 'rxjs';
+import { from, Observable, ObservableInput, Subject } from 'rxjs';
 
 export function useObservedValue<V, D>(
 	valueSource: ObservableInput<V> | null | undefined,
