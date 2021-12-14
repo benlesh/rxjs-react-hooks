@@ -1,0 +1,8 @@
+src/**/*.test.tsx
+src/**/*.test.ts
+CODE_OF_CONDUCT.md
+jest.config.js
+tsconfig.json
+dist/**/*.test.d.ts
+dist/**/*.test.js
+dist/**/*.test.js.map
