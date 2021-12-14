@@ -1,6 +1,6 @@
 {
 	"name": "rxjs-react-hooks",
-	"version": "0.0.0",
+	"version": "0.0.1",
 	"description": "Lightweight reactive programming hooks for React and RxJS",
 	"module": "dist/index.js",
 	"scripts": {
